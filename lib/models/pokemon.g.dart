@@ -11,7 +11,7 @@ Pokemon _$PokemonFromJson(Map<String, dynamic> json) => Pokemon(
   json['name'] as String,
   (json['height'] as num).toInt(),
   (json['weight'] as num).toInt(),
-  _Sprites.fromJson(json['sprites'] as Map<String, dynamic>),
+  Sprites.fromJson(json['sprites'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$PokemonToJson(Pokemon instance) => <String, dynamic>{
@@ -22,9 +22,9 @@ Map<String, dynamic> _$PokemonToJson(Pokemon instance) => <String, dynamic>{
   'sprites': instance.sprites,
 };
 
-_Sprites _$SpritesFromJson(Map<String, dynamic> json) =>
-    _Sprites(json['other'] as Map<String, dynamic>);
+Sprites _$SpritesFromJson(Map<String, dynamic> json) =>
+    Sprites(json['other'] as Map<String, dynamic>);
 
-Map<String, dynamic> _$SpritesToJson(_Sprites instance) => <String, dynamic>{
+Map<String, dynamic> _$SpritesToJson(Sprites instance) => <String, dynamic>{
   'other': instance.other,
 };

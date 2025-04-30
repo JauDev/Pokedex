@@ -14,7 +14,7 @@ class Pokemon {
   final int weightHectograms;
 
   @JsonKey(name: 'sprites')
-  final _Sprites sprites;
+  final Sprites sprites;
 
   Pokemon(
     this.id,
@@ -33,11 +33,11 @@ class Pokemon {
 }
 
 @JsonSerializable()
-class _Sprites {
+class Sprites {
   final Map<String, dynamic> other;
-  _Sprites(this.other);
+  Sprites(this.other);
 
-  factory _Sprites.fromJson(Map<String, dynamic> json) =>
+  factory Sprites.fromJson(Map<String, dynamic> json) =>
       _$SpritesFromJson(json);
   Map<String, dynamic> toJson() => _$SpritesToJson(this);
 }
