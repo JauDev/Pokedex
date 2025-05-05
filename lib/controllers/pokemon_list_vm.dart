@@ -40,4 +40,16 @@ class PokemonListVM extends ChangeNotifier {
             notifyListeners();
         }
     }
+
+    /// Filtra la llista localment, sense noves crides de xarxa
+    void search(String query) {
+        if (query.isEmpty) {
+            _filtered = null;
+        } else {
+            final q = query.toLowerCase();
+            _filtered =
+                _all.where((p) => p.name.toLowerCase().contains(q)).toList();
+        }
+        notifyListeners();
+    }
 }
