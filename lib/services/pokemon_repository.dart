@@ -19,7 +19,6 @@ class PokemonRepository {
   final http.Client _client;
   PokemonRepository({http.Client? client}) : _client = client ?? http.Client();
 
-  // ---------- crides bàsiques ----------
   Future<PokemonPage> fetchPage({int limit = 50, int offset = 0}) async {
     final res = await _client
         .get(Uri.parse('$_base/pokemon?limit=$limit&offset=$offset'))

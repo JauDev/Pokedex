@@ -29,7 +29,6 @@ class PokemonCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Imatge del Pokémon (clicable)
               Expanded(
                 child: CachedNetworkImage(
                   imageUrl:
@@ -58,13 +57,11 @@ class PokemonCard extends StatelessWidget {
     );
   }
 
-  /// Extreu l'ID de l'URL (p. ex. ".../pokemon/25/" → 25)
   int _extractId(String url) {
     final parts = url.split('/').where((s) => s.isNotEmpty).toList();
     return int.tryParse(parts.last) ?? 0;
   }
 
-  /// Primera lletra en majúscula
   String _capitalize(String s) =>
       s.substring(0, 1).toUpperCase() + s.substring(1);
 }

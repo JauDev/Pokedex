@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';      // ← nou import
+import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/type_utils.dart';
 import '../models/pokemon.dart';
 

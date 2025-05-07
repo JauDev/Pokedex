@@ -7,16 +7,13 @@ class PokemonListVM extends ChangeNotifier {
   PokemonListVM(this._repo);
   final PokemonRepository _repo;
 
-  // ───── Dades ──────────────────────────────────────────────
   final List<PokemonSummary> _master = [];
   bool _loading = false;
 
-  // ───── Filtres ───────────────────────────────────────────
   int? _gen;
   String? _type;
   String _search = '';
 
-  // ───── Resultat visible ──────────────────────────────────
   List<PokemonSummary> _visible = [];
   List<PokemonSummary> get pokemons => List.unmodifiable(_visible);
   bool get loading => _loading;
@@ -24,13 +21,11 @@ class PokemonListVM extends ChangeNotifier {
   int? get selectedGeneration => _gen;
   String? get selectedType => _type;
 
-  // ========================================================
   Future<void> init() async {
-    await _fetchRange(1, 1025);        // carrega tots els Pokémon
+    await _fetchRange(1, 1025);
     _apply();
   }
 
-  // ───── Filtres públics ──────────────────────────────────
   Future<void> setGeneration(int? g) async {
     _gen = g;
     await _rebuild();
@@ -46,7 +41,6 @@ class PokemonListVM extends ChangeNotifier {
     _apply();
   }
 
-  // ───── Reconstrueix _master segons filtres ───────────────
   Future<void> _rebuild() async {
     _loading = true; notifyListeners();
 
@@ -70,8 +64,6 @@ class PokemonListVM extends ChangeNotifier {
     _loading = false;
     _apply();
   }
-
-  // ───── Helpers de càrrega ────────────────────────────────
   Future<void> _fetchRange(int start, int end) async {
     final page = await _repo.fetchPage(limit: end - start + 1, offset: start - 1);
     _master.addAll(page.results);
@@ -86,7 +78,6 @@ class PokemonListVM extends ChangeNotifier {
     }));
   }
 
-  // ───── Filtrat final ─────────────────────────────────────
   void _apply() {
     Iterable<PokemonSummary> list = _master;
 

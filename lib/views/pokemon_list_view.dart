@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../controllers/pokemon_list_vm.dart';
 import '../utils/generation_utils.dart';
 import '../widgets/pokemon_card.dart';
-import 'pokemon_detail_view.dart';  // ← Importa la vista de detalls
+import 'pokemon_detail_view.dart';
 
 class PokemonListView extends StatelessWidget {
   const PokemonListView({super.key});
@@ -16,7 +16,6 @@ class PokemonListView extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // AppBar amb cercador + filtres
           SliverAppBar(
             floating: true,
             title: const Text('Pokédex'),
@@ -36,7 +35,6 @@ class PokemonListView extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        // Generació
                         DropdownButton<int?>(
                           value: vm.selectedGeneration,
                           hint: const Text('Generació'),
@@ -76,8 +74,6 @@ class PokemonListView extends StatelessWidget {
               ),
             ),
           ),
-
-          // Graella de targetes amb InkWell per navegar
           SliverPadding(
             padding: const EdgeInsets.all(8),
             sliver: SliverGrid(
@@ -105,8 +101,6 @@ class PokemonListView extends StatelessWidget {
               ),
             ),
           ),
-
-          // Loader si està carregant
           if (vm.loading)
             const SliverToBoxAdapter(
               child: Padding(

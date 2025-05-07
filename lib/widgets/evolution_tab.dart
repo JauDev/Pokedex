@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/pokemon_summary.dart';
-import '../widgets/pokemon_card.dart';   // ajusta la ruta si cal
+import '../widgets/pokemon_card.dart';
 
-/// Pestanya “Evolució”
 class EvolutionTab extends StatelessWidget {
   const EvolutionTab({super.key, required this.evos});
   final List<PokemonSummary> evos;

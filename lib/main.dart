@@ -12,7 +12,7 @@ void main() {
         Provider(create: (_) => PokemonRepository()),
         ChangeNotifierProvider(
           create: (context) =>
-              PokemonListVM(context.read<PokemonRepository>())..init(), // ⬅︎ arrenca la càrrega inicial
+              PokemonListVM(context.read<PokemonRepository>())..init(),
         ),
       ],
       child: const MyApp(),

@@ -1,4 +1,3 @@
-/// Rang [start, end] d'ID per generació
 const Map<int, List<int>> generationRanges = {
   1: [1, 151],
   2: [152, 251],
@@ -23,7 +22,6 @@ const generationLabels = {
   9: 'Gen 9 (Paldea)',
 };
 
-/// Tipus oficials
 const List<String> allTypes = [
   'normal','fire','water','electric','grass','ice','fighting','poison',
   'ground','flying','psychic','bug','rock','ghost','dragon',
