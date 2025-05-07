@@ -13,6 +13,10 @@ class Pokemon {
   @JsonKey(name: 'weight')
   final int weightHectograms;
 
+  final List<dynamic> types;
+
+  final List<dynamic> stats;
+
   @JsonKey(name: 'sprites')
   final Sprites sprites;
 
@@ -21,6 +25,8 @@ class Pokemon {
     this.name,
     this.heightDecimetres,
     this.weightHectograms,
+    this.types,
+    this.stats,
     this.sprites,
   );
 
