@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'services/pokemon_repository.dart';
 import 'controllers/pokemon_list_vm.dart';
-import 'views/pokemon_list_view.dart';  // <-- vista real
+import 'views/pokemon_list_view.dart';
 
 void main() {
   runApp(
@@ -31,8 +31,7 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: Colors.red,
         useMaterial3: true,
       ),
-      home: const PokemonListView(),   // <-- la graella
-      // (opcional) si més endavant afegeixes rutes:
+      home: const PokemonListView(),
       // routes: {
       //   '/': (_) => const PokemonListView(),
       //   '/detail': (context) {
