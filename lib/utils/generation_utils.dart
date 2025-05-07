@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 /// Rang [start, end] d'ID per generació
 const Map<int, List<int>> generationRanges = {
   1: [1, 151],

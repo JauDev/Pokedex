@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../controllers/pokemon_detail_vm.dart';
 import '../services/pokemon_repository.dart';
 import '../models/pokemon.dart';
-import '../models/pokemon_summary.dart';
 
-import '../widgets/info_tab.dart';       // ← pestanyes separades
+import '../widgets/info_tab.dart';
 import '../widgets/stats_tab.dart';
 import '../widgets/evolution_tab.dart';
 
