@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/pokemon_list_vm.dart';
-import '../utils/generation_utils.dart';    // conté generationRanges, allTypes, EvoStage
+import '../utils/generation_utils.dart';
 import '../widgets/pokemon_card.dart';
 
 class PokemonListView extends StatelessWidget {
@@ -15,19 +15,15 @@ class PokemonListView extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // ───────────────────────────────────────────
-          //  AppBar flotant amb cercador + filtres
-          // ───────────────────────────────────────────
           SliverAppBar(
             floating: true,
             title: const Text('Pokédex'),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(140),
+              preferredSize: const Size.fromHeight(120),
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: Column(
                   children: [
-                    // ── Cercador per nom ───────────────────────
                     TextField(
                       decoration: const InputDecoration(
                         hintText: 'Cerca Pokémon…',
@@ -36,53 +32,38 @@ class PokemonListView extends StatelessWidget {
                       onChanged: vm.search,
                     ),
                     const SizedBox(height: 8),
-                    // ── Filtres: Generació · Tipus · Etapa ─────
                     Row(
                       children: [
-                        // ── Generació ───────────────────────────
+                        // Generació
                         DropdownButton<int?>(
                           value: vm.selectedGeneration,
                           hint: const Text('Generació'),
                           items: [
                             const DropdownMenuItem(value: null, child: Text('Totes')),
-                            ...generationLabels.entries.map(
-                              (e) => DropdownMenuItem(
-                                value: e.key,
-                                child: Text(e.value),
-                              ),
-                            ),
+                            ...generationLabels.entries
+                                .map((e) => DropdownMenuItem(
+                                      value: e.key,
+                                      child: Text(e.value),
+                                    ))
+                                .toList(),
                           ],
                           onChanged: (g) => vm.setGeneration(g),
                         ),
-                        const SizedBox(width: 8),
-                        // ── Tipus ───────────────────────────────
+                        const SizedBox(width: 12),
+                        // Tipus
                         DropdownButton<String?>(
                           value: vm.selectedType,
                           hint: const Text('Tipus'),
                           items: [
                             const DropdownMenuItem(value: null, child: Text('Tots')),
-                            ...allTypes.map(
-                              (t) => DropdownMenuItem(
-                                value: t,
-                                child: Text(t.toUpperCase()),
-                              ),
-                            ),
+                            ...allTypes
+                                .map((t) => DropdownMenuItem(
+                                      value: t,
+                                      child: Text(t.toUpperCase()),
+                                    ))
+                                .toList(),
                           ],
                           onChanged: (t) => vm.setType(t),
-                        ),
-                        const SizedBox(width: 8),
-                        // ── Etapa evolutiva ─────────────────────
-                        DropdownButton<EvoStage>(
-                          value: vm.selectedStage,
-                          items: EvoStage.values
-                              .map(
-                                (s) => DropdownMenuItem(
-                                  value: s,
-                                  child: Text(evoStageLabels[s]!),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (s) => vm.setStage(s!),
                         ),
                       ],
                     ),
@@ -91,10 +72,7 @@ class PokemonListView extends StatelessWidget {
               ),
             ),
           ),
-
-          // ───────────────────────────────────────────
-          //  Graella de targetes Pokémon
-          // ───────────────────────────────────────────
+          // Graella
           SliverPadding(
             padding: const EdgeInsets.all(8),
             sliver: SliverGrid(
@@ -108,10 +86,6 @@ class PokemonListView extends StatelessWidget {
               ),
             ),
           ),
-
-          // ───────────────────────────────────────────
-          //  Indicador de càrrega
-          // ───────────────────────────────────────────
           if (vm.loading)
             const SliverToBoxAdapter(
               child: Padding(
