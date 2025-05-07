@@ -1,24 +1,17 @@
 import 'package:flutter/material.dart';
 
-const generationRanges = {
-  1: (1, 151),
-  2: (152, 251),
-  3: (252, 386),
-  4: (387, 493),
-  5: (494, 649),
-  6: (650, 721),
-  7: (722, 809),
-  8: (810, 905),
-  9: (906, 1025),
+/// Rang [start, end] d’ID per generació
+const Map<int, List<int>> generationRanges = {
+  1: [1, 151],
+  2: [152, 251],
+  3: [252, 386],
+  4: [387, 493],
+  5: [494, 649],
+  6: [650, 721],
+  7: [722, 809],
+  8: [810, 905],
+  9: [906, 1025],
 };
-
-int generationOfId(int id) {
-  for (final entry in generationRanges.entries) {
-    final (start, end) = entry.value;
-    if (id >= start && id <= end) return entry.key;
-  }
-  return 0;
-}
 
 const generationLabels = {
   1: 'Gen 1 (Kanto)',
@@ -38,6 +31,7 @@ const List<String> allTypes = [
   'dark','steel','fairy',
 ];
 
+/// Etapa evolutiva
 enum EvoStage { any, base, middle, finalStage }
 
 const evoStageLabels = {

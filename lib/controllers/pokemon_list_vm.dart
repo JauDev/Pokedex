@@ -3,75 +3,54 @@ import '../services/pokemon_repository.dart';
 import '../models/pokemon_summary.dart';
 import '../models/pokemon_page.dart';
 import '../models/pokemon.dart';
-import '../utils/generation_utils.dart';
+import '../utils/generation_utils.dart';   // ← fa servir EvoStage i ranges
 
 class PokemonListVM extends ChangeNotifier {
   PokemonListVM(this._repo);
-
   final PokemonRepository _repo;
 
-  // ── Caches ─────────────────────────────────────────────────
-  final List<PokemonSummary> _all = [];
-  final Map<String, Pokemon> _detailCache = {};            // nom → detall
-  final Map<String, Map<String, dynamic>> _speciesCache = {}; // nom → species
+  // ── Dades ───────────────────────────────────────────────────
+  final List<PokemonSummary> _master = [];
+  final Map<String, Pokemon> _detail = {};
+  final Map<String, _SpecInfo> _specInfo = {};
 
-  // ── Estat dels filtres ────────────────────────────────────
+  // ── Filtres ─────────────────────────────────────────────────
+  int? _gen;
+  String? _type;
+  EvoStage _stage = EvoStage.any;
   String _search = '';
-  int? _selectedGeneration;
-  String? _selectedType;
-  EvoStage _selectedStage = EvoStage.any;
 
-  // ── Estat de càrrega/paginació ────────────────────────────
   bool _loading = false;
-  int _nextOffset = 0;
-  bool _exhausted = false;
 
-  // ── Resultat filtrat ──────────────────────────────────────
-  List<PokemonSummary> _filtered = [];
-  List<PokemonSummary> get pokemons => List.unmodifiable(_filtered);
+  // ── Getters ─────────────────────────────────────────────────
+  List<PokemonSummary> _visible = [];
+  List<PokemonSummary> get pokemons => List.unmodifiable(_visible);
   bool get loading => _loading;
 
-  int? get selectedGeneration => _selectedGeneration;
-  String? get selectedType => _selectedType;
-  EvoStage get selectedStage => _selectedStage;
+  int? get selectedGeneration => _gen;
+  String? get selectedType => _type;
+  EvoStage get selectedStage => _stage;
 
-  // ──────────────────────────────────────────────────────────
-  // Accions públiques
-  // ──────────────────────────────────────────────────────────
-  Future<void> loadMore() async {
-    if (_loading || _exhausted || _selectedGeneration != null) return;
-    _loading = true; notifyListeners();
-
-    final page = await _repo.fetchPage(limit: 50, offset: _nextOffset);
-    _all.addAll(page.results);
-    _nextOffset += page.results.length;
-    _exhausted = page.next == null;
-
-    _loading = false;
+  // ===========================================================
+  Future<void> init() async {
+    await _loadPage(offset: 0, limit: 200);
     _applyFilters();
   }
 
-  Future<void> setGeneration(int? gen) async {
-    _selectedGeneration = gen;
-    if (gen != null) {
-      await _loadGeneration(gen);
-    }
-    _applyFilters();
+  // ── Accions públicues ───────────────────────────────────────
+  Future<void> setGeneration(int? g) async {
+    _gen = g;
+    await _rebuild();
   }
 
-  Future<void> setType(String? type) async {
-    _selectedType = type;
-    if (type != null) {
-      await _loadTypeList(type);
-    }
-    _applyFilters();
+  Future<void> setType(String? t) async {
+    _type = t;
+    await _rebuild();
   }
 
-  Future<void> setStage(EvoStage stage) async {
-    _selectedStage = stage;
-    if (stage != EvoStage.any) {
-      await _ensureSpeciesLoaded();
-    }
+  Future<void> setStage(EvoStage s) async {
+    _stage = s;
+    if (s != EvoStage.any) await _ensureSpecies();
     _applyFilters();
   }
 
@@ -80,93 +59,122 @@ class PokemonListVM extends ChangeNotifier {
     _applyFilters();
   }
 
-  // ──────────────────────────────────────────────────────────
-  // Càrrega dirigida per filtres
-  // ──────────────────────────────────────────────────────────
-  Future<void> _loadGeneration(int gen) async {
-    final (start, end) = generationRanges[gen]!;
-    final limit = end - start + 1;
+  // ── Reconstrueix la llista mestra segons filtres ────────────
+  Future<void> _rebuild() async {
     _loading = true; notifyListeners();
 
-    final page =
-        await _repo.fetchPage(limit: limit, offset: start - 1);
-    _all
-      ..clear()
-      ..addAll(page.results);
-    _detailCache.clear();
-    _speciesCache.clear();
+    _master.clear();
+    _detail.clear();
+    _specInfo.clear();
+
+    if (_gen == null && _type == null) {
+      await _fetchRange(1, 1025);
+    } else if (_gen != null && _type == null) {
+      final r = generationRanges[_gen]!;
+      await _fetchRange(r[0], r[1]);
+    } else if (_gen == null && _type != null) {
+      await _loadByType(_type!);
+    } else {
+      await _loadByType(_type!);
+      final r = generationRanges[_gen]!;
+      _master.removeWhere((p) {
+        final id = int.parse(p.url.split('/').where((s) => s.isNotEmpty).last);
+        return id < r[0] || id > r[1];
+      });
+    }
+
+    if (_stage != EvoStage.any) await _ensureSpecies();
     _loading = false;
+    _applyFilters();
   }
 
-  Future<void> _loadTypeList(String type) async {
-    // endpoint /type/{name}
+  // ── Helpers de càrrega ─────────────────────────────────────
+  Future<void> _loadPage({required int offset, required int limit}) async {
+    final page = await _repo.fetchPage(limit: limit, offset: offset);
+    _master.addAll(page.results);
+  }
+
+  Future<void> _fetchRange(int start, int end) async =>
+      _loadPage(offset: start - 1, limit: end - start + 1);
+
+  Future<void> _loadByType(String type) async {
     final data = await _repo.fetchType(type);
     final List<dynamic> pl = data['pokemon'];
-    _all
-      ..clear()
-      ..addAll(pl.map((e) {
-        final p = e['pokemon'] as Map<String, dynamic>;
-        return PokemonSummary(p['name'] as String, p['url'] as String);
-      }));
-    _detailCache.clear();
-    _speciesCache.clear();
+    _master.addAll(pl.map((e) {
+      final p = e['pokemon'] as Map<String, dynamic>;
+      return PokemonSummary(p['name'] as String, p['url'] as String);
+    }));
   }
 
-  Future<void> _ensureSpeciesLoaded() async {
-    final names = _all.map((p) => p.name).where(
-          (n) => !_speciesCache.containsKey(n),
-        );
-
-    for (final name in names) {
-      // Detall
-      if (!_detailCache.containsKey(name)) {
-        _detailCache[name] = await _repo.fetchPokemon(name);
-      }
-      // Species
-      final id = _detailCache[name]!.id;
-      _speciesCache[name] = await _repo.fetchSpecies(id);
+  // ── Species + evolució ─────────────────────────────────────
+  Future<void> _ensureSpecies() async {
+    for (final p in _master) {
+      if (_specInfo.containsKey(p.name)) continue;
+      final det = await _repo.fetchPokemon(p.name);
+      final sp = await _repo.fetchSpecies(det.id);
+      final evoUrl = (sp['evolution_chain'] as Map)['url'] as String;
+      final chain = await _repo.fetchEvolutionChain(evoUrl);
+      _specInfo[p.name] = _analyse(chain['chain'], p.name);
     }
   }
 
-  // ──────────────────────────────────────────────────────────
-  // Filtrat intern
-  // ──────────────────────────────────────────────────────────
-  void _applyFilters() {
-    Iterable<PokemonSummary> list = _all;
+  _SpecInfo _analyse(Map<String, dynamic> node, String target) {
+    bool prev = false, next = false;
+    void dfs(Map<String, dynamic> n, {bool hasPrev = false}) {
+      final name = (n['species'] as Map)['name'] as String;
+      if (name == target) {
+        prev = hasPrev;
+        next = (n['evolves_to'] as List).isNotEmpty;
+      }
+      for (final nxt in n['evolves_to'] as List) {
+        dfs(nxt as Map<String, dynamic>, hasPrev: true);
+      }
+    }
 
-    // cerca text
+    dfs(node);
+    return _SpecInfo(prev, next);
+  }
+
+  // ── Filtrat final ───────────────────────────────────────────
+  void _applyFilters() {
+    Iterable<PokemonSummary> list = _master;
+
     if (_search.isNotEmpty) {
       list = list.where((p) => p.name.contains(_search));
     }
 
-    // tipus
-    if (_selectedType != null) {
-      list = list.where((p) => _detailCache[p.name]?.types
-              .any((t) => t['type']['name'] == _selectedType) ??
-          false);
+    if (_type != null) {
+      list = list.where((p) =>
+          _detail[p.name]?.types.any(
+              (t) => t['type']['name'] == _type) ??
+          true);
     }
 
-    // etapa evolutiva
-    if (_selectedStage != EvoStage.any) {
+    if (_stage != EvoStage.any) {
       list = list.where((p) {
-        final spec = _speciesCache[p.name];
-        if (spec == null) return false;
-        final hasPrev = spec['evolves_from_species'] != null;
-        final evolves = (spec['evolution_chain'] as Map)['url'] != null;
-        switch (_selectedStage) {
+        final i = _specInfo[p.name];
+        if (i == null) return false;
+        switch (_stage) {
           case EvoStage.base:
-            return !hasPrev && evolves;
+            return !i.prev && i.next;
           case EvoStage.middle:
-            return hasPrev && evolves;
+            return i.prev && i.next;
           case EvoStage.finalStage:
-            return hasPrev && !evolves;
+            return i.prev && !i.next;
           case EvoStage.any:
             return true;
         }
       });
     }
 
-    _filtered = list.toList();
+    _visible = list.toList();
     notifyListeners();
   }
+}
+
+// Info evolutiva simplificada
+class _SpecInfo {
+  final bool prev;
+  final bool next;
+  const _SpecInfo(this.prev, this.next);
 }

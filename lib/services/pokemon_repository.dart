@@ -1,4 +1,3 @@
-// lib/services/pokemon_repository.dart
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -11,7 +10,6 @@ class PokemonApiException implements Exception {
   final String message;
   final int? status;
   PokemonApiException(this.message, [this.status]);
-
   @override
   String toString() => 'PokemonApiException($status): $message';
 }
@@ -21,7 +19,7 @@ class PokemonRepository {
   final http.Client _client;
   PokemonRepository({http.Client? client}) : _client = client ?? http.Client();
 
-  // ───── Llista paginada ───────────────────────────────────────────
+  // ---------- crides bàsiques ----------
   Future<PokemonPage> fetchPage({int limit = 50, int offset = 0}) async {
     final res = await _client
         .get(Uri.parse('$_base/pokemon?limit=$limit&offset=$offset'))
@@ -32,7 +30,6 @@ class PokemonRepository {
     return PokemonPage.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
-  // ───── Detall bàsic d’un Pokémon ────────────────────────────────
   Future<Pokemon> fetchPokemon(String nameOrId) async {
     final res = await _client
         .get(Uri.parse('$_base/pokemon/$nameOrId'))
@@ -43,7 +40,6 @@ class PokemonRepository {
     return Pokemon.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
-  // ───── Species (informació d’evolució) ──────────────────────────
   Future<Map<String, dynamic>> fetchSpecies(int id) async {
     final res = await _client
         .get(Uri.parse('$_base/pokemon-species/$id'))
@@ -54,7 +50,6 @@ class PokemonRepository {
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
 
-  // ───── Llista de Pokémon per TIPUS ──────────────────────────────
   Future<Map<String, dynamic>> fetchType(String type) async {
     final res = await _client
         .get(Uri.parse('$_base/type/$type'))
@@ -65,11 +60,9 @@ class PokemonRepository {
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
 
-  // ───── Cadena d’evolució ───────────────────────────────────────
   Future<Map<String, dynamic>> fetchEvolutionChain(String url) async {
-    final res = await _client
-        .get(Uri.parse(url))
-        .timeout(const Duration(seconds: 10));
+    final res =
+        await _client.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
     if (res.statusCode != HttpStatus.ok) {
       throw PokemonApiException('Error evolution chain', res.statusCode);
     }

@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'services/pokemon_repository.dart';
 import 'controllers/pokemon_list_vm.dart';
 import 'views/pokemon_list_view.dart';
-import 'views/pokemon_detail_view.dart';
 
 void main() {
   runApp(
@@ -13,7 +12,7 @@ void main() {
         Provider(create: (_) => PokemonRepository()),
         ChangeNotifierProvider(
           create: (context) =>
-              PokemonListVM(context.read<PokemonRepository>())..loadMore(),
+              PokemonListVM(context.read<PokemonRepository>())..init(), // ⬅︎ arrenca la càrrega inicial
         ),
       ],
       child: const MyApp(),
@@ -32,13 +31,7 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: Colors.red,
         useMaterial3: true,
       ),
-      routes: {
-        '/': (_) => const PokemonListView(),
-        '/detail': (context) {
-          final name = ModalRoute.of(context)!.settings.arguments as String;
-          return PokemonDetailView(name: name);
-        },
-      },
+      home: const PokemonListView(),
     );
   }
 }
