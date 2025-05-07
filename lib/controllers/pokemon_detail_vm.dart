@@ -26,7 +26,7 @@ class PokemonDetailVM extends ChangeNotifier {
       _pokemon = await _repo.fetchPokemon(nameOrId);
 
       final species =
-          await _repo.fetchSpecies(_pokemon!.id); // evolution_chain.url
+          await _repo.fetchSpecies(_pokemon!.id);
       final evoUrl =
           (species['evolution_chain'] as Map<String, dynamic>)['url'] as String;
 

@@ -21,6 +21,5 @@ const Map<String, Color> typeColors = {
   'fairy':   Color(0xFFD685AD),
 };
 
-/// Ruta local de la icona SVG (ex.: grass → assets/types_svg/grass.svg)
 String typeAsset(String type) =>
     'assets/types_svg/${type.toLowerCase()}.svg';

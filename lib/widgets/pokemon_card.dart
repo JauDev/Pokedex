@@ -1,51 +1,67 @@
+// lib/widgets/pokemon_card.dart
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
 import '../models/pokemon_summary.dart';
+import '../views/pokemon_detail_view.dart';
 
 class PokemonCard extends StatelessWidget {
-  const PokemonCard({super.key, required this.pokemon});
-
   final PokemonSummary pokemon;
-
-  String get _id =>
-      pokemon.url.split('/').where((s) => s.isNotEmpty).last;
-
-  String get _artwork =>
-      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$_id.png';
+  const PokemonCard({super.key, required this.pokemon});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.pushNamed(
-        context,
-        '/detail',
-        arguments: pokemon.name,
-      ),
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          children: [
-            Expanded(
-              child: Hero(
-                tag: int.parse(_id),
+    final name = pokemon.name;
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => PokemonDetailView(name: name),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
                 child: CachedNetworkImage(
-                  imageUrl: _artwork,
+                  imageUrl:
+                      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${_extractId(pokemon.url)}.png',
                   placeholder: (_, __) =>
                       const Center(child: CircularProgressIndicator()),
                   errorWidget: (_, __, ___) =>
-                      const Icon(Icons.catching_pokemon, size: 48),
+                      const Icon(Icons.error_outline),
+                  fit: BoxFit.contain,
                 ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              pokemon.name[0].toUpperCase() + pokemon.name.substring(1),
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 4),
-          ],
+              const SizedBox(height: 8),
+              // Nom i ID
+              Text(
+                _capitalize(name),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '#${_extractId(pokemon.url)}',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  int _extractId(String url) {
+    final parts = url.split('/').where((s) => s.isNotEmpty).toList();
+    return int.tryParse(parts.last) ?? 0;
+  }
+
+  String _capitalize(String s) =>
+      s.substring(0, 1).toUpperCase() + s.substring(1);
 }

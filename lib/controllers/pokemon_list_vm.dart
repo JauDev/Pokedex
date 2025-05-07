@@ -1,55 +1,91 @@
 import 'package:flutter/foundation.dart';
 import '../services/pokemon_repository.dart';
 import '../models/pokemon_summary.dart';
-import '../models/pokemon_page.dart';
+import '../utils/generation_utils.dart';
 
 class PokemonListVM extends ChangeNotifier {
-    PokemonListVM(this._repo);
+  PokemonListVM(this._repo);
+  final PokemonRepository _repo;
 
-    final PokemonRepository _repo;
-    final List<PokemonSummary> _all = [];
+  final List<PokemonSummary> _master = [];
+  bool _loading = false;
 
-    // Estat intern
-    bool _loading = false;
-    bool _hasNext = true;
-    int _offset = 0;
+  int? _gen;
+  String? _type;
+  String _search = '';
 
-    List<PokemonSummary>? _filtered;
+  List<PokemonSummary> _visible = [];
+  List<PokemonSummary> get pokemons => List.unmodifiable(_visible);
+  bool get loading => _loading;
 
-    // Getters per a la UI
-    List<PokemonSummary> get pokemons =>
-        List.unmodifiable(_filtered ?? _all);
-    bool get loading => _loading;
+  int? get selectedGeneration => _gen;
+  String? get selectedType => _type;
 
-    /// Carrega la següent pàgina (50 ítems per defecte)
-    Future<void> loadMore() async {
-        if (_loading || !_hasNext) return;
-        _loading = true;
-        notifyListeners();
+  Future<void> init() async {
+    await _fetchRange(1, 1025);
+    _apply();
+  }
 
-        try {
-            final PokemonPage page =
-                await _repo.fetchPage(limit: 50, offset: _offset);
-            _all.addAll(page.results);
-            _offset += page.results.length;
-            _hasNext = page.next != null;
-        } catch (_) {
-            rethrow;
-        } finally {
-            _loading = false;
-            notifyListeners();
-        }
+  Future<void> setGeneration(int? g) async {
+    _gen = g;
+    await _rebuild();
+  }
+
+  Future<void> setType(String? t) async {
+    _type = t;
+    await _rebuild();
+  }
+
+  void search(String q) {
+    _search = q.toLowerCase();
+    _apply();
+  }
+
+  Future<void> _rebuild() async {
+    _loading = true; notifyListeners();
+
+    _master.clear();
+    if (_gen == null && _type == null) {
+      await _fetchRange(1, 1025);
+    } else if (_gen != null && _type == null) {
+      final r = generationRanges[_gen]!;
+      await _fetchRange(r[0], r[1]);
+    } else if (_gen == null && _type != null) {
+      await _loadByType(_type!);
+    } else {
+      await _loadByType(_type!);
+      final r = generationRanges[_gen]!;
+      _master.removeWhere((p) {
+        final id = int.parse(p.url.split('/').where((s) => s.isNotEmpty).last);
+        return id < r[0] || id > r[1];
+      });
     }
 
-    /// Filtra la llista localment, sense noves crides de xarxa
-    void search(String query) {
-        if (query.isEmpty) {
-            _filtered = null;
-        } else {
-            final q = query.toLowerCase();
-            _filtered =
-                _all.where((p) => p.name.toLowerCase().contains(q)).toList();
-        }
-        notifyListeners();
+    _loading = false;
+    _apply();
+  }
+  Future<void> _fetchRange(int start, int end) async {
+    final page = await _repo.fetchPage(limit: end - start + 1, offset: start - 1);
+    _master.addAll(page.results);
+  }
+
+  Future<void> _loadByType(String type) async {
+    final data = await _repo.fetchType(type);
+    final List<dynamic> pl = data['pokemon'];
+    _master.addAll(pl.map((e) {
+      final p = e['pokemon'] as Map<String, dynamic>;
+      return PokemonSummary(p['name'] as String, p['url'] as String);
+    }));
+  }
+
+  void _apply() {
+    Iterable<PokemonSummary> list = _master;
+
+    if (_search.isNotEmpty) {
+      list = list.where((p) => p.name.contains(_search));
     }
+
+    _visible = list.toList();
+    notifyListeners();
+  }
 }
