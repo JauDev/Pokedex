@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'services/pokemon_repository.dart';
 import 'controllers/pokemon_list_vm.dart';
 import 'views/pokemon_list_view.dart';
+import 'views/pokemon_detail_view.dart';
 
 void main() {
   runApp(
@@ -31,14 +32,13 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: Colors.red,
         useMaterial3: true,
       ),
-      home: const PokemonListView(),
-      // routes: {
-      //   '/': (_) => const PokemonListView(),
-      //   '/detail': (context) {
-      //     final name = ModalRoute.of(context)!.settings.arguments as String;
-      //     return PokemonDetailView(name: name);
-      //   },
-      // },
+      routes: {
+        '/': (_) => const PokemonListView(),
+        '/detail': (context) {
+          final name = ModalRoute.of(context)!.settings.arguments as String;
+          return PokemonDetailView(name: name);
+        },
+      },
     );
   }
 }
