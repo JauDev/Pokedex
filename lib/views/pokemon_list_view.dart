@@ -32,7 +32,6 @@ class PokemonListView extends StatelessWidget {
             sliver: SliverGrid(
               delegate: SliverChildBuilderDelegate(
                 (context, i) {
-                  // carrega la següent pàgina quan arribem al final
                   if (i == vm.pokemons.length - 1) vm.loadMore();
                   return PokemonCard(pokemon: vm.pokemons[i]);
                 },

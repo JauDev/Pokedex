@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import '../models/pokemon_page.dart';
 import '../models/pokemon.dart';
 
@@ -18,57 +18,44 @@ class PokemonApiException implements Exception {
 class PokemonRepository {
   static const _base = 'https://pokeapi.co/api/v2';
   final http.Client _client;
-
   PokemonRepository({http.Client? client}) : _client = client ?? http.Client();
 
-  Future<PokemonPage> fetchPage({
-    int limit = 50,
-    int offset = 0,
-    Duration timeout = const Duration(seconds: 10),
-  }) async {
+  // ───── llista paginada ───────────────────────────────────────
+  Future<PokemonPage> fetchPage({int limit = 50, int offset = 0}) async {
     final uri = Uri.parse('$_base/pokemon?limit=$limit&offset=$offset');
-
-    try {
-      final res = await _client.get(uri).timeout(timeout);
-      if (res.statusCode != HttpStatus.ok) {
-        throw PokemonApiException(
-          'Error ${res.statusCode} descarregant pàgina ($uri)',
-          res.statusCode,
-        );
-      }
-      return compute(_parsePage, res.body);
-    } on SocketException {
-      throw PokemonApiException('Sense connexió a Internet');
-    } on TimeoutException {
-      throw PokemonApiException('La petició ha superat el temps límit');
+    final res = await _client.get(uri).timeout(const Duration(seconds: 10));
+    if (res.statusCode != HttpStatus.ok) {
+      throw PokemonApiException('Error ${res.statusCode} page', res.statusCode);
     }
+    return PokemonPage.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
-  Future<Pokemon> fetchPokemon(
-    String nameOrId, {
-    Duration timeout = const Duration(seconds: 10),
-  }) async {
+  // ───── detall d’un Pokémon ───────────────────────────────────
+  Future<Pokemon> fetchPokemon(String nameOrId) async {
     final uri = Uri.parse('$_base/pokemon/$nameOrId');
-
-    try {
-      final res = await _client.get(uri).timeout(timeout);
-      if (res.statusCode != HttpStatus.ok) {
-        throw PokemonApiException(
-          'Error ${res.statusCode} descarregant $nameOrId',
-          res.statusCode,
-        );
-      }
-      return compute(_parsePokemon, res.body);
-    } on SocketException {
-      throw PokemonApiException('Sense connexió a Internet');
-    } on TimeoutException {
-      throw PokemonApiException('La petició ha superat el temps límit');
+    final res = await _client.get(uri).timeout(const Duration(seconds: 10));
+    if (res.statusCode != HttpStatus.ok) {
+      throw PokemonApiException('Error ${res.statusCode} pokemon', res.statusCode);
     }
+    return Pokemon.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
-  static PokemonPage _parsePage(String body) =>
-      PokemonPage.fromJson(jsonDecode(body) as Map<String, dynamic>);
+  // ───── species (per trobar evolution chain) ──────────────────
+  Future<Map<String, dynamic>> fetchSpecies(int id) async {
+    final uri = Uri.parse('$_base/pokemon-species/$id');
+    final res = await _client.get(uri).timeout(const Duration(seconds: 10));
+    if (res.statusCode != HttpStatus.ok) {
+      throw PokemonApiException('Error ${res.statusCode} species', res.statusCode);
+    }
+    return jsonDecode(res.body) as Map<String, dynamic>;
+  }
 
-  static Pokemon _parsePokemon(String body) =>
-      Pokemon.fromJson(jsonDecode(body) as Map<String, dynamic>);
+  // ───── evolution chain (rep url sencera) ─────────────────────
+  Future<Map<String, dynamic>> fetchEvolutionChain(String url) async {
+    final res = await _client.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+    if (res.statusCode != HttpStatus.ok) {
+      throw PokemonApiException('Error ${res.statusCode} evolution', res.statusCode);
+    }
+    return jsonDecode(res.body) as Map<String, dynamic>;
+  }
 }

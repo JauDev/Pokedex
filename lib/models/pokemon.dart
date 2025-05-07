@@ -13,8 +13,10 @@ class Pokemon {
   @JsonKey(name: 'weight')
   final int weightHectograms;
 
+  /// Llista de tipus: [{type: {name: fire}}, …]
   final List<dynamic> types;
 
+  /// Llista d’estadístiques: [{stat: {name: hp}, base_stat: 45}, …]
   final List<dynamic> stats;
 
   @JsonKey(name: 'sprites')
@@ -30,6 +32,7 @@ class Pokemon {
     this.sprites,
   );
 
+  /// Artwork oficial HD
   String? get officialArtwork =>
       sprites.other['official-artwork']?['front_default'] as String?;
 
