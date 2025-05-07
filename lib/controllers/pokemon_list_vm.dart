@@ -1,31 +1,42 @@
 import 'package:flutter/foundation.dart';
+
 import '../services/pokemon_repository.dart';
 import '../models/pokemon_summary.dart';
+import '../models/pokemon_page.dart';
 import '../utils/generation_utils.dart';
 
 class PokemonListVM extends ChangeNotifier {
   PokemonListVM(this._repo);
   final PokemonRepository _repo;
 
+  // ── Estat intern ────────────────────────────────────────────
   final List<PokemonSummary> _master = [];
+  List<PokemonSummary> _visible = [];
   bool _loading = false;
+  String? _error;
 
+  // ── Filtres ────────────────────────────────────────────────
   int? _gen;
   String? _type;
-  String _search = '';
+  String  _search = '';
 
-  List<PokemonSummary> _visible = [];
+  // ── Getters públics ─────────────────────────────────────────
   List<PokemonSummary> get pokemons => List.unmodifiable(_visible);
   bool get loading => _loading;
-
+  String? get error => _error;
   int? get selectedGeneration => _gen;
   String? get selectedType => _type;
 
+  // ===========================================================
+  // Inicialització (crida des de main.dart amb ..init())
+  // ===========================================================
   Future<void> init() async {
-    await _fetchRange(1, 1025);
-    _apply();
+    await _rebuild();
   }
 
+  // ===========================================================
+  // Accions públiques
+  // ===========================================================
   Future<void> setGeneration(int? g) async {
     _gen = g;
     await _rebuild();
@@ -41,31 +52,58 @@ class PokemonListVM extends ChangeNotifier {
     _apply();
   }
 
+  // ===========================================================
+  // Recarrega tota la llista segons filtres, amb try/catch
+  // ===========================================================
   Future<void> _rebuild() async {
-    _loading = true; notifyListeners();
+    _loading = true;
+    _error = null;
+    notifyListeners();
 
-    _master.clear();
-    if (_gen == null && _type == null) {
-      await _fetchRange(1, 1025);
-    } else if (_gen != null && _type == null) {
-      final r = generationRanges[_gen]!;
-      await _fetchRange(r[0], r[1]);
-    } else if (_gen == null && _type != null) {
-      await _loadByType(_type!);
-    } else {
-      await _loadByType(_type!);
-      final r = generationRanges[_gen]!;
-      _master.removeWhere((p) {
-        final id = int.parse(p.url.split('/').where((s) => s.isNotEmpty).last);
-        return id < r[0] || id > r[1];
-      });
+    try {
+      _master.clear();
+
+      if (_gen == null && _type == null) {
+        // Tots els Pokémon
+        await _fetchRange(1, 1025);
+      } else if (_gen != null && _type == null) {
+        // Només generació
+        final range = generationRanges[_gen]!;
+        await _fetchRange(range[0], range[1]);
+      } else if (_gen == null && _type != null) {
+        // Només tipus
+        await _loadByType(_type!);
+      } else {
+        // Generació + tipus → intersecció
+        await _loadByType(_type!);
+        final range = generationRanges[_gen]!;
+        _master.removeWhere((p) {
+          final id = int.parse(
+            p.url.split('/').where((s) => s.isNotEmpty).last,
+          );
+          return id < range[0] || id > range[1];
+        });
+      }
+
+      _apply();
+    } catch (e) {
+      _error = 'Error carregant dades. Revisa la connexió.';
+      _visible = [];
+      notifyListeners();
+    } finally {
+      _loading = false;
+      notifyListeners();
     }
-
-    _loading = false;
-    _apply();
   }
+
+  // ===========================================================
+  // Helpers HTTP
+  // ===========================================================
   Future<void> _fetchRange(int start, int end) async {
-    final page = await _repo.fetchPage(limit: end - start + 1, offset: start - 1);
+    final page = await _repo.fetchPage(
+      limit: end - start + 1,
+      offset: start - 1,
+    );
     _master.addAll(page.results);
   }
 
@@ -78,13 +116,14 @@ class PokemonListVM extends ChangeNotifier {
     }));
   }
 
+  // ===========================================================
+  // Filtrat final (aplica cerca + devolucions)
+  // ===========================================================
   void _apply() {
     Iterable<PokemonSummary> list = _master;
-
     if (_search.isNotEmpty) {
       list = list.where((p) => p.name.contains(_search));
     }
-
     _visible = list.toList();
     notifyListeners();
   }

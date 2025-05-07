@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../controllers/pokemon_list_vm.dart';
 import '../utils/generation_utils.dart';
 import '../widgets/pokemon_card.dart';
-import 'pokemon_detail_view.dart';
 
 class PokemonListView extends StatelessWidget {
   const PokemonListView({super.key});
@@ -16,6 +15,7 @@ class PokemonListView extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
+          // ── AppBar amb cercador i filtres ────────────────────────
           SliverAppBar(
             floating: true,
             title: const Text('Pokédex'),
@@ -25,6 +25,7 @@ class PokemonListView extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 child: Column(
                   children: [
+                    // Cercador per nom
                     TextField(
                       decoration: const InputDecoration(
                         hintText: 'Cerca Pokémon…',
@@ -33,14 +34,14 @@ class PokemonListView extends StatelessWidget {
                       onChanged: vm.search,
                     ),
                     const SizedBox(height: 8),
+                    // Filtres: Generació i Tipus
                     Row(
                       children: [
                         DropdownButton<int?>(
                           value: vm.selectedGeneration,
                           hint: const Text('Generació'),
                           items: [
-                            const DropdownMenuItem(
-                                value: null, child: Text('Totes')),
+                            const DropdownMenuItem(value: null, child: Text('Totes')),
                             ...generationLabels.entries.map(
                               (e) => DropdownMenuItem(
                                 value: e.key,
@@ -51,13 +52,11 @@ class PokemonListView extends StatelessWidget {
                           onChanged: (g) => vm.setGeneration(g),
                         ),
                         const SizedBox(width: 12),
-                        // Tipus
                         DropdownButton<String?>(
                           value: vm.selectedType,
                           hint: const Text('Tipus'),
                           items: [
-                            const DropdownMenuItem(
-                                value: null, child: Text('Tots')),
+                            const DropdownMenuItem(value: null, child: Text('Tots')),
                             ...allTypes.map(
                               (t) => DropdownMenuItem(
                                 value: t,
@@ -74,34 +73,51 @@ class PokemonListView extends StatelessWidget {
               ),
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.all(8),
-            sliver: SliverGrid(
-              delegate: SliverChildBuilderDelegate(
-                (context, i) {
-                  final pokemon = vm.pokemons[i];
-                  return InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              PokemonDetailView(name: pokemon.name),
-                        ),
-                      );
-                    },
-                    child: PokemonCard(pokemon: pokemon),
-                  );
-                },
-                childCount: vm.pokemons.length,
+
+          // ── Si hi ha error, mostrem el missatge d’error ───────────
+          if (vm.error != null)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Text(
+                  vm.error!,
+                  style: const TextStyle(color: Colors.red, fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
               ),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: .8,
+            )
+
+          // ── Si no hi ha cap Pokémon i no s’està cargant, avisem ───
+          else if (vm.pokemons.isEmpty && !vm.loading)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: const Center(
+                child: Text(
+                  'No s\'ha trobat cap Pokémon amb aquest nom.',
+                  style: TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+
+          // ── Altrament, mostrem la graella ────────────────────────
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(8),
+              sliver: SliverGrid(
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) => PokemonCard(pokemon: vm.pokemons[i]),
+                  childCount: vm.pokemons.length,
+                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  childAspectRatio: .8,
+                ),
               ),
             ),
-          ),
-          if (vm.loading)
+
+          // ── Loader (només si no hi ha error ni missatge buit) ───
+          if (vm.loading && vm.error == null)
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
