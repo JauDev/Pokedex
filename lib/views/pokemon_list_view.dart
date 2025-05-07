@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../controllers/pokemon_list_vm.dart';
 import '../utils/generation_utils.dart';
 import '../widgets/pokemon_card.dart';
+import 'pokemon_detail_view.dart';  // ← Importa la vista de detalls
 
 class PokemonListView extends StatelessWidget {
   const PokemonListView({super.key});
@@ -15,6 +16,7 @@ class PokemonListView extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
+          // AppBar amb cercador + filtres
           SliverAppBar(
             floating: true,
             title: const Text('Pokédex'),
@@ -39,13 +41,14 @@ class PokemonListView extends StatelessWidget {
                           value: vm.selectedGeneration,
                           hint: const Text('Generació'),
                           items: [
-                            const DropdownMenuItem(value: null, child: Text('Totes')),
-                            ...generationLabels.entries
-                                .map((e) => DropdownMenuItem(
-                                      value: e.key,
-                                      child: Text(e.value),
-                                    ))
-                                .toList(),
+                            const DropdownMenuItem(
+                                value: null, child: Text('Totes')),
+                            ...generationLabels.entries.map(
+                              (e) => DropdownMenuItem(
+                                value: e.key,
+                                child: Text(e.value),
+                              ),
+                            ),
                           ],
                           onChanged: (g) => vm.setGeneration(g),
                         ),
@@ -55,13 +58,14 @@ class PokemonListView extends StatelessWidget {
                           value: vm.selectedType,
                           hint: const Text('Tipus'),
                           items: [
-                            const DropdownMenuItem(value: null, child: Text('Tots')),
-                            ...allTypes
-                                .map((t) => DropdownMenuItem(
-                                      value: t,
-                                      child: Text(t.toUpperCase()),
-                                    ))
-                                .toList(),
+                            const DropdownMenuItem(
+                                value: null, child: Text('Tots')),
+                            ...allTypes.map(
+                              (t) => DropdownMenuItem(
+                                value: t,
+                                child: Text(t.toUpperCase()),
+                              ),
+                            ),
                           ],
                           onChanged: (t) => vm.setType(t),
                         ),
@@ -72,12 +76,27 @@ class PokemonListView extends StatelessWidget {
               ),
             ),
           ),
-          // Graella
+
+          // Graella de targetes amb InkWell per navegar
           SliverPadding(
             padding: const EdgeInsets.all(8),
             sliver: SliverGrid(
               delegate: SliverChildBuilderDelegate(
-                (context, i) => PokemonCard(pokemon: vm.pokemons[i]),
+                (context, i) {
+                  final pokemon = vm.pokemons[i];
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              PokemonDetailView(name: pokemon.name),
+                        ),
+                      );
+                    },
+                    child: PokemonCard(pokemon: pokemon),
+                  );
+                },
                 childCount: vm.pokemons.length,
               ),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -86,6 +105,8 @@ class PokemonListView extends StatelessWidget {
               ),
             ),
           ),
+
+          // Loader si està carregant
           if (vm.loading)
             const SliverToBoxAdapter(
               child: Padding(
