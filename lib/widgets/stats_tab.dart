@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/pokemon.dart';
 
-/// Pestanya “Stats”
 class StatsTab extends StatelessWidget {
   const StatsTab({super.key, required this.pokemon});
   final Pokemon pokemon;
