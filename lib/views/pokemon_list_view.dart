@@ -15,7 +15,6 @@ class PokemonListView extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // ── AppBar amb cercador i filtres ────────────────────────
           SliverAppBar(
             floating: true,
             title: const Text('Pokédex'),
@@ -25,7 +24,6 @@ class PokemonListView extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 child: Column(
                   children: [
-                    // Cercador per nom
                     TextField(
                       decoration: const InputDecoration(
                         hintText: 'Cerca Pokémon…',
@@ -34,7 +32,6 @@ class PokemonListView extends StatelessWidget {
                       onChanged: vm.search,
                     ),
                     const SizedBox(height: 8),
-                    // Filtres: Generació i Tipus
                     Row(
                       children: [
                         DropdownButton<int?>(
@@ -74,7 +71,6 @@ class PokemonListView extends StatelessWidget {
             ),
           ),
 
-          // ── Si hi ha error, mostrem el missatge d’error ───────────
           if (vm.error != null)
             SliverFillRemaining(
               hasScrollBody: false,
@@ -87,7 +83,6 @@ class PokemonListView extends StatelessWidget {
               ),
             )
 
-          // ── Si no hi ha cap Pokémon i no s’està cargant, avisem ───
           else if (vm.pokemons.isEmpty && !vm.loading)
             SliverFillRemaining(
               hasScrollBody: false,
@@ -100,7 +95,6 @@ class PokemonListView extends StatelessWidget {
               ),
             )
 
-          // ── Altrament, mostrem la graella ────────────────────────
           else
             SliverPadding(
               padding: const EdgeInsets.all(8),
@@ -116,7 +110,6 @@ class PokemonListView extends StatelessWidget {
               ),
             ),
 
-          // ── Loader (només si no hi ha error ni missatge buit) ───
           if (vm.loading && vm.error == null)
             const SliverToBoxAdapter(
               child: Padding(
